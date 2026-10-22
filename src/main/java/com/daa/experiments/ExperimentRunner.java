@@ -2,17 +2,17 @@ package com.daa.experiments;
 
 import com.daa.connectivity.StronglyConnectedComponents;
 import com.daa.connectivity.TopologicalSort;
-import com.daa.dsu.DisjointSetUnion;
 import com.daa.graph.DirectedGraph;
 import com.daa.graph.WeightedGraph;
+import com.daa.metrics.OperationCounts;
 import com.daa.mst.KruskalMst;
 import com.daa.mst.PrimMst;
 import com.daa.shortestpath.Dijkstra;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -20,8 +20,9 @@ import java.util.function.Supplier;
  *
  * <p>Each benchmark runs exactly five repetitions. Graph creation happens
  * before timing; only the algorithm invocation is inside the
- * {@link System#nanoTime()} interval. Current algorithm APIs do not expose
- * operation counters, so result counter maps are empty rather than estimated.</p>
+ * {@link System#nanoTime()} interval. Operation counts are collected in one
+ * separate instrumented invocation after timing, so counter overhead is not
+ * included in elapsed times.</p>
  */
 public final class ExperimentRunner {
     public static final int REPETITIONS = 5;
@@ -34,31 +35,36 @@ public final class ExperimentRunner {
     public static ExperimentResult benchmarkKruskal(WeightedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
         return benchmark("Kruskal", graph.getVertexCount(), graph.getEdgeCount(),
-                () -> KruskalMst.findMinimumSpanningTree(graph));
+                () -> KruskalMst.findMinimumSpanningTree(graph),
+                counters -> KruskalMst.findMinimumSpanningTree(graph, counters));
     }
 
     public static ExperimentResult benchmarkPrim(WeightedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
         return benchmark("Prim", graph.getVertexCount(), graph.getEdgeCount(),
-                () -> PrimMst.findMinimumSpanningTree(graph));
+                () -> PrimMst.findMinimumSpanningTree(graph),
+                counters -> PrimMst.findMinimumSpanningTree(graph, counters));
     }
 
     public static ExperimentResult benchmarkTopologicalSort(DirectedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
         return benchmark("Topological sort", graph.getVertexCount(), graph.getEdgeCount(),
-                () -> TopologicalSort.sort(graph));
+                () -> TopologicalSort.sort(graph),
+                counters -> TopologicalSort.sort(graph, counters));
     }
 
     public static ExperimentResult benchmarkStronglyConnectedComponents(DirectedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
         return benchmark("Kosaraju SCC", graph.getVertexCount(), graph.getEdgeCount(),
-                () -> StronglyConnectedComponents.find(graph));
+                () -> StronglyConnectedComponents.find(graph),
+                counters -> StronglyConnectedComponents.find(graph, counters));
     }
 
     public static ExperimentResult benchmarkDijkstra(WeightedGraph graph, int source) {
         Objects.requireNonNull(graph, "Graph cannot be null");
         return benchmark("Dijkstra", graph.getVertexCount(), graph.getEdgeCount(),
-                () -> Dijkstra.findShortestPaths(graph, source));
+                () -> Dijkstra.findShortestPaths(graph, source),
+                counters -> Dijkstra.findShortestPaths(graph, source, counters));
     }
 
     /**
@@ -103,7 +109,11 @@ public final class ExperimentRunner {
     }
 
     private static ExperimentResult benchmark(
-            String algorithm, int vertexCount, int edgeCount, Supplier<?> invocation) {
+            String algorithm,
+            int vertexCount,
+            int edgeCount,
+            Supplier<?> invocation,
+            Function<OperationCounts, ?> instrumentedInvocation) {
         long elapsedTotal = 0;
         for (int repetition = 0; repetition < REPETITIONS; repetition++) {
             long start = System.nanoTime();
@@ -112,6 +122,8 @@ public final class ExperimentRunner {
             lastBenchmarkResult = result;
             elapsedTotal += elapsed;
         }
+        OperationCounts counters = new OperationCounts();
+        instrumentedInvocation.apply(counters);
 
         return new ExperimentResult(
                 algorithm,
@@ -119,6 +131,6 @@ public final class ExperimentRunner {
                 edgeCount,
                 REPETITIONS,
                 elapsedTotal / REPETITIONS,
-                Map.of());
+                counters.asMap());
     }
 }

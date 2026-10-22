@@ -2,6 +2,7 @@ package com.daa.mst;
 
 import com.daa.graph.Edge;
 import com.daa.graph.WeightedGraph;
+import com.daa.metrics.OperationCounts;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -57,6 +58,65 @@ public final class PrimMst {
                 for (Edge adjacentEdge : graph.getAdjacentEdges(nextVertex)) {
                     if (!visited[adjacentEdge.getDestination()]) {
                         candidates.add(adjacentEdge);
+                    }
+                }
+            }
+        }
+
+        boolean isSpanningTree = vertexCount > 0
+                && selectedEdges.size() == vertexCount - 1;
+        return new MstResult(selectedEdges, totalWeight, isSpanningTree);
+    }
+
+    /**
+     * Instrumented variant. Insertions count every candidate edge placed in
+     * the queue, removals count every polled candidate, stale skips count
+     * removals whose destination was already visited, and examined edges
+     * count removed candidates including stale ones.
+     */
+    public static MstResult findMinimumSpanningTree(
+            WeightedGraph graph, OperationCounts counters) {
+        Objects.requireNonNull(graph, "Graph cannot be null");
+        Objects.requireNonNull(counters, "Counters cannot be null");
+        counters.enable(
+                OperationCounts.Counter.priorityQueueInsertions,
+                OperationCounts.Counter.priorityQueueRemovals,
+                OperationCounts.Counter.staleEntriesSkipped,
+                OperationCounts.Counter.edgesExamined);
+
+        int vertexCount = graph.getVertexCount();
+        List<Edge> selectedEdges = new ArrayList<>(Math.max(0, vertexCount - 1));
+        boolean[] visited = new boolean[vertexCount];
+        PriorityQueue<Edge> candidates = new PriorityQueue<>(EDGE_ORDER);
+        long totalWeight = 0;
+
+        for (int start = 0; start < vertexCount; start++) {
+            if (visited[start]) {
+                continue;
+            }
+
+            visited[start] = true;
+            for (Edge edge : graph.getAdjacentEdges(start)) {
+                candidates.add(edge);
+                counters.increment(OperationCounts.Counter.priorityQueueInsertions);
+            }
+            while (!candidates.isEmpty()) {
+                Edge edge = candidates.remove();
+                counters.increment(OperationCounts.Counter.priorityQueueRemovals);
+                counters.increment(OperationCounts.Counter.edgesExamined);
+                int nextVertex = edge.getDestination();
+                if (visited[nextVertex]) {
+                    counters.increment(OperationCounts.Counter.staleEntriesSkipped);
+                    continue;
+                }
+
+                visited[nextVertex] = true;
+                selectedEdges.add(edge);
+                totalWeight += edge.getWeight();
+                for (Edge adjacentEdge : graph.getAdjacentEdges(nextVertex)) {
+                    if (!visited[adjacentEdge.getDestination()]) {
+                        candidates.add(adjacentEdge);
+                        counters.increment(OperationCounts.Counter.priorityQueueInsertions);
                     }
                 }
             }

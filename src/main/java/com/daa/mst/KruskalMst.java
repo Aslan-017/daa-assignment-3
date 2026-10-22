@@ -3,6 +3,7 @@ package com.daa.mst;
 import com.daa.dsu.DisjointSetUnion;
 import com.daa.graph.Edge;
 import com.daa.graph.WeightedGraph;
+import com.daa.metrics.OperationCounts;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,7 +29,6 @@ public final class KruskalMst {
 
         int vertexCount = graph.getVertexCount();
         List<Edge> sortedEdges = new ArrayList<>(graph.getEdges());
-        // List.sort is stable, so equal-weight edges retain insertion order.
         sortedEdges.sort(Comparator.comparingInt(Edge::getWeight));
 
         DisjointSetUnion sets = new DisjointSetUnion(vertexCount);
@@ -42,6 +42,51 @@ public final class KruskalMst {
                 if (selectedEdges.size() == vertexCount - 1) {
                     break;
                 }
+            }
+        }
+
+        boolean isSpanningTree = vertexCount > 0
+                && selectedEdges.size() == vertexCount - 1;
+        return new MstResult(selectedEdges, totalWeight, isSpanningTree);
+    }
+
+    /**
+     * Instrumented variant. {@code edgesExamined} counts edges reached in
+     * sorted order, {@code dsuFindCalls} counts the actual representative
+     * lookups performed by DSU, and union counters count successful merges
+     * versus edges rejected because their endpoints were already connected.
+     */
+    public static MstResult findMinimumSpanningTree(
+            WeightedGraph graph, OperationCounts counters) {
+        Objects.requireNonNull(graph, "Graph cannot be null");
+        Objects.requireNonNull(counters, "Counters cannot be null");
+        counters.enable(
+                OperationCounts.Counter.edgesExamined,
+                OperationCounts.Counter.dsuFindCalls,
+                OperationCounts.Counter.successfulUnions,
+                OperationCounts.Counter.rejectedCycleFormingEdges);
+
+        int vertexCount = graph.getVertexCount();
+        List<Edge> sortedEdges = new ArrayList<>(graph.getEdges());
+        // List.sort is stable, so equal-weight edges retain insertion order.
+        sortedEdges.sort(Comparator.comparingInt(Edge::getWeight));
+
+        DisjointSetUnion sets = new DisjointSetUnion(vertexCount);
+        List<Edge> selectedEdges = new ArrayList<>(Math.max(0, vertexCount - 1));
+        long totalWeight = 0;
+
+        for (Edge edge : sortedEdges) {
+            counters.increment(OperationCounts.Counter.edgesExamined);
+            boolean merged = sets.union(edge.getSource(), edge.getDestination(), counters);
+            if (merged) {
+                counters.increment(OperationCounts.Counter.successfulUnions);
+                selectedEdges.add(edge);
+                totalWeight += edge.getWeight();
+                if (selectedEdges.size() == vertexCount - 1) {
+                    break;
+                }
+            } else {
+                counters.increment(OperationCounts.Counter.rejectedCycleFormingEdges);
             }
         }
 

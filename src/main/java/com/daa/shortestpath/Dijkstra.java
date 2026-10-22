@@ -2,6 +2,7 @@ package com.daa.shortestpath;
 
 import com.daa.graph.Edge;
 import com.daa.graph.WeightedGraph;
+import com.daa.metrics.OperationCounts;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -58,6 +59,71 @@ public final class Dijkstra {
                             "Dijkstra cannot process negative edge weights: " + weight);
                 }
 
+                if (current.distance > Long.MAX_VALUE - weight) {
+                    continue;
+                }
+                long candidateDistance = current.distance + weight;
+                int neighbor = edge.getDestination();
+                if (candidateDistance < distances[neighbor]) {
+                    distances[neighbor] = candidateDistance;
+                    predecessors[neighbor] = current.vertex;
+                    pending.add(new QueueEntry(neighbor, candidateDistance));
+                }
+            }
+        }
+
+        return new DijkstraResult(source, distances, predecessors);
+    }
+
+    /**
+     * Instrumented variant. Queue insertion/removal counters count actual
+     * operations, stale skips count removals whose recorded distance no longer
+     * matches the best known distance, and examined edges count adjacency
+     * entries scanned from non-stale removals.
+     */
+    public static DijkstraResult findShortestPaths(
+            WeightedGraph graph, int source, OperationCounts counters) {
+        Objects.requireNonNull(graph, "Graph cannot be null");
+        Objects.requireNonNull(counters, "Counters cannot be null");
+        counters.enable(
+                OperationCounts.Counter.priorityQueueInsertions,
+                OperationCounts.Counter.priorityQueueRemovals,
+                OperationCounts.Counter.staleEntriesSkipped,
+                OperationCounts.Counter.edgesExamined);
+
+        int vertexCount = graph.getVertexCount();
+        if (source < 0 || source >= vertexCount) {
+            throw new IndexOutOfBoundsException(
+                    "Source vertex " + source + " is outside [0, " + vertexCount + ')');
+        }
+
+        long[] distances = new long[vertexCount];
+        Arrays.fill(distances, Long.MAX_VALUE);
+        int[] predecessors = new int[vertexCount];
+        Arrays.fill(predecessors, -1);
+        distances[source] = 0;
+
+        PriorityQueue<QueueEntry> pending = new PriorityQueue<>(
+                Comparator.comparingLong(entry -> entry.distance));
+        pending.add(new QueueEntry(source, 0));
+        counters.increment(OperationCounts.Counter.priorityQueueInsertions);
+
+        while (!pending.isEmpty()) {
+            QueueEntry current = pending.remove();
+            counters.increment(OperationCounts.Counter.priorityQueueRemovals);
+            if (current.distance != distances[current.vertex]) {
+                counters.increment(OperationCounts.Counter.staleEntriesSkipped);
+                continue;
+            }
+
+            for (Edge edge : graph.getAdjacentEdges(current.vertex)) {
+                counters.increment(OperationCounts.Counter.edgesExamined);
+                int weight = edge.getWeight();
+                if (weight < 0) {
+                    throw new IllegalArgumentException(
+                            "Dijkstra cannot process negative edge weights: " + weight);
+                }
+
                 // Keep Long.MAX_VALUE reserved for unreachable vertices and avoid overflow.
                 if (current.distance > Long.MAX_VALUE - weight) {
                     continue;
@@ -68,6 +134,7 @@ public final class Dijkstra {
                     distances[neighbor] = candidateDistance;
                     predecessors[neighbor] = current.vertex;
                     pending.add(new QueueEntry(neighbor, candidateDistance));
+                    counters.increment(OperationCounts.Counter.priorityQueueInsertions);
                 }
             }
         }
