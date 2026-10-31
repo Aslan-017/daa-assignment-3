@@ -47,6 +47,51 @@ public final class CsvExporter {
         return outputFile;
     }
 
+    public static Path exportDsuResults(
+            List<DsuExperimentResult> results, Path outputFile) throws IOException {
+        Objects.requireNonNull(results, "Results cannot be null");
+        Objects.requireNonNull(outputFile, "Output file cannot be null");
+
+        Set<String> counterColumns = new TreeSet<>();
+        for (DsuExperimentResult result : results) {
+            counterColumns.addAll(Objects.requireNonNull(result, "Result cannot be null")
+                    .operationCounts().keySet());
+        }
+
+        Path parent = outputFile.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                outputFile, StandardCharsets.UTF_8)) {
+            List<String> columns = new java.util.ArrayList<>(List.of(
+                    "variant",
+                    "seed",
+                    "vertex_count",
+                    "operation_count",
+                    "repetition_count",
+                    "average_elapsed_time_ns"));
+            columns.addAll(counterColumns);
+            writeRow(writer, columns);
+            for (DsuExperimentResult result : results) {
+                List<String> row = new java.util.ArrayList<>(List.of(
+                        result.variant(),
+                        Long.toString(result.seed()),
+                        Integer.toString(result.vertexCount()),
+                        Integer.toString(result.operationCount()),
+                        Integer.toString(result.repetitionCount()),
+                        Long.toString(result.averageElapsedTimeNanos())));
+                for (String counter : counterColumns) {
+                    Long value = result.operationCounts().get(counter);
+                    row.add(value == null ? "" : value.toString());
+                }
+                writeRow(writer, row);
+            }
+        }
+        return outputFile;
+    }
+
     private static List<String> combinedColumns(Set<String> counterColumns) {
         java.util.ArrayList<String> columns = new java.util.ArrayList<>(FIXED_COLUMNS);
         columns.addAll(counterColumns);

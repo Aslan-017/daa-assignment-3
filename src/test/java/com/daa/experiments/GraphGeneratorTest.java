@@ -1,5 +1,6 @@
 package com.daa.experiments;
 
+import com.daa.connectivity.StronglyConnectedComponents;
 import com.daa.connectivity.TopologicalSort;
 import com.daa.graph.DirectedGraph;
 import com.daa.graph.Edge;
@@ -128,6 +129,71 @@ class GraphGeneratorTest {
     }
 
     @Test
+    void generatesMultipleNontrivialSccsWithOneWayEdgesBetweenThem() {
+        GraphGenerator generator = new GraphGenerator(42);
+
+        for (GraphGenerator.GraphSize size : GraphGenerator.standardMstSizes()) {
+            DirectedGraph graph = generator.generateDirectedGraphWithMultipleComponents(
+                    size.vertexCount(), size.edgeCount());
+            List<List<Integer>> components = StronglyConnectedComponents.find(graph);
+
+            assertEquals(size.vertexCount(), graph.getVertexCount());
+            assertEquals(size.edgeCount(), graph.getEdgeCount());
+            assertEquals(3, components.size());
+            assertTrue(components.stream().allMatch(component -> component.size() >= 2));
+            assertNoEdgesBetweenComponentsInBothDirections(graph, components);
+        }
+    }
+
+    @Test
+    void generatedIsolatedVerticesHaveNoIncidentEdgesAndRemainSingletonComponents() {
+        GraphGenerator generator = new GraphGenerator(42);
+
+        for (GraphGenerator.GraphSize size : GraphGenerator.standardMstSizes()) {
+            DirectedGraph graph = generator.generateDirectedGraphWithIsolatedVertices(
+                    size.vertexCount(), size.edgeCount());
+            List<List<Integer>> components = StronglyConnectedComponents.find(graph);
+            int isolatedCount = 0;
+            boolean[] hasIncoming = new boolean[graph.getVertexCount()];
+            for (int source = 0; source < graph.getVertexCount(); source++) {
+                for (int destination : graph.getAdjacentVertices(source)) {
+                    hasIncoming[destination] = true;
+                }
+            }
+
+            assertEquals(size.vertexCount(), graph.getVertexCount());
+            assertEquals(size.edgeCount(), graph.getEdgeCount());
+            for (int vertex = 0; vertex < graph.getVertexCount(); vertex++) {
+                if (graph.getAdjacentVertices(vertex).isEmpty() && !hasIncoming[vertex]) {
+                    isolatedCount++;
+                    int isolatedVertex = vertex;
+                    assertTrue(components.stream().anyMatch(
+                            component -> component.equals(List.of(isolatedVertex))));
+                }
+            }
+            assertTrue(isolatedCount >= 2);
+            assertEquals(isolatedCount + 1, components.size());
+        }
+    }
+
+    @Test
+    void newSccScenariosAreReproducibleForFixedSeed() {
+        GraphGenerator first = new GraphGenerator(42);
+        GraphGenerator second = new GraphGenerator(42);
+        DirectedGraph firstMultiple = first.generateDirectedGraphWithMultipleComponents(20, 70);
+        DirectedGraph secondMultiple = second.generateDirectedGraphWithMultipleComponents(20, 70);
+        DirectedGraph firstIsolated = first.generateDirectedGraphWithIsolatedVertices(20, 70);
+        DirectedGraph secondIsolated = second.generateDirectedGraphWithIsolatedVertices(20, 70);
+
+        for (int vertex = 0; vertex < 20; vertex++) {
+            assertEquals(firstMultiple.getAdjacentVertices(vertex),
+                    secondMultiple.getAdjacentVertices(vertex));
+            assertEquals(firstIsolated.getAdjacentVertices(vertex),
+                    secondIsolated.getAdjacentVertices(vertex));
+        }
+    }
+
+    @Test
     void generatesSingletonCyclicGraphUsingSelfLoop() {
         DirectedGraph graph = new GraphGenerator(99).generateCyclicDirectedGraph(1, 1);
 
@@ -151,6 +217,28 @@ class GraphGeneratorTest {
         for (int source = 0; source < graph.getVertexCount(); source++) {
             for (int destination : graph.getAdjacentVertices(source)) {
                 assertTrue(seen.add(source + ":" + destination));
+            }
+        }
+    }
+
+    private void assertNoEdgesBetweenComponentsInBothDirections(
+            DirectedGraph graph, List<List<Integer>> components) {
+        int[] componentByVertex = new int[graph.getVertexCount()];
+        for (int component = 0; component < components.size(); component++) {
+            for (int vertex : components.get(component)) {
+                componentByVertex[vertex] = component;
+            }
+        }
+        Set<String> interComponentDirections = new HashSet<>();
+        for (int source = 0; source < graph.getVertexCount(); source++) {
+            for (int destination : graph.getAdjacentVertices(source)) {
+                int sourceComponent = componentByVertex[source];
+                int destinationComponent = componentByVertex[destination];
+                if (sourceComponent != destinationComponent) {
+                    assertFalse(interComponentDirections.contains(
+                            destinationComponent + ":" + sourceComponent));
+                    interComponentDirections.add(sourceComponent + ":" + destinationComponent);
+                }
             }
         }
     }

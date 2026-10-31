@@ -1,0 +1,13 @@
+variant,seed,vertex_count,operation_count,repetition_count,average_elapsed_time_ns,connectivityQueries,dsuFindCalls,findTraversals,pathCompressionParentPointerUpdates,successfulUnions,unionParentPointerUpdates
+basic,42,10,1000,5,277840,495,2000,5423,0,9,9
+path_compression_only,42,10,1000,5,256540,495,2000,1787,18,9,9
+union_by_size_only,42,10,1000,5,247180,495,2000,2184,0,9,9
+path_compression_and_union_by_size,42,10,1000,5,241980,495,2000,1772,2,9,9
+basic,42,100,5000,5,1562360,2461,10000,101929,0,99,99
+path_compression_only,42,100,5000,5,977360,2461,10000,10019,382,99,99
+union_by_size_only,42,100,5000,5,296060,2461,10000,16129,0,99,99
+path_compression_and_union_by_size,42,100,5000,5,201820,2461,10000,9714,57,99,99
+basic,42,1000,50000,5,34020960,24959,100000,11497680,0,999,999
+path_compression_only,42,1000,50000,5,1162700,24959,100000,109776,12255,999,999
+union_by_size_only,42,1000,50000,5,2365040,24959,100000,193891,0,999,999
+path_compression_and_union_by_size,42,1000,50000,5,1090360,24959,100000,98302,782,999,999

@@ -118,6 +118,25 @@ public final class ExperimentRunner {
             results.add(benchmarkDijkstra(
                     disconnectedDijkstraGraphs.get(index), 0, "unreachable"));
         }
+        results.addAll(runAdditionalSccExperiments(seed));
+        return List.copyOf(results);
+    }
+
+    public static List<ExperimentResult> runAdditionalSccExperiments(long seed) {
+        GraphGenerator generator = new GraphGenerator(seed);
+        List<ExperimentResult> results = new ArrayList<>();
+        for (GraphGenerator.GraphSize size : GraphGenerator.standardMstSizes()) {
+            DirectedGraph multipleComponents =
+                    generator.generateDirectedGraphWithMultipleComponents(
+                            size.vertexCount(), size.edgeCount());
+            DirectedGraph isolatedVertices =
+                    generator.generateDirectedGraphWithIsolatedVertices(
+                            size.vertexCount(), size.edgeCount());
+            results.add(benchmarkStronglyConnectedComponents(
+                    multipleComponents, "multiple_components"));
+            results.add(benchmarkStronglyConnectedComponents(
+                    isolatedVertices, "isolated_vertices"));
+        }
         return List.copyOf(results);
     }
 

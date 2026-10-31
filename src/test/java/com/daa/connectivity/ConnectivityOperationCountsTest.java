@@ -49,6 +49,6 @@ class ConnectivityOperationCountsTest {
 
         assertEquals(Map.of(
                 "verticesVisited", 6L,
-                "edgesExamined", 6L), counters.asMap());
+                "edgesExamined", 9L), counters.asMap());
     }
 }

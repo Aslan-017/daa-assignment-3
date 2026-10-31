@@ -85,7 +85,7 @@ public final class StronglyConnectedComponents {
         return List.copyOf(components);
     }
 
-    // Visits count discoveries in each pass; edge scans count original and transpose adjacency entries.
+    // Counts edge scans in the first DFS, transpose construction, and second DFS.
     public static List<List<Integer>> find(
             DirectedGraph graph, OperationCounts counters) {
         Objects.requireNonNull(graph, "Graph cannot be null");
@@ -133,6 +133,7 @@ public final class StronglyConnectedComponents {
         }
         for (int source = 0; source < vertexCount; source++) {
             for (int destination : adjacencyList.get(source)) {
+                counters.increment(OperationCounts.Counter.edgesExamined);
                 transpose.get(destination).add(source);
             }
         }

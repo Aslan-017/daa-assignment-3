@@ -175,6 +175,123 @@ public final class GraphGenerator {
         return graph;
     }
 
+    public DirectedGraph generateDirectedGraphWithMultipleComponents(
+            int vertexCount, int edgeCount) {
+        if (vertexCount < 6 || edgeCount < vertexCount) {
+            throw new IllegalArgumentException(
+                    "Multiple-component graph needs at least six vertices and one cycle edge per vertex");
+        }
+
+        List<Integer> order = vertexOrder(vertexCount);
+        int[] componentByPosition = new int[vertexCount];
+        int[] componentSizes = new int[3];
+        for (int component = 0; component < componentSizes.length; component++) {
+            componentSizes[component] = vertexCount / componentSizes.length
+                    + (component < vertexCount % componentSizes.length ? 1 : 0);
+        }
+        int position = 0;
+        for (int component = 0; component < componentSizes.length; component++) {
+            for (int index = 0; index < componentSizes[component]; index++) {
+                componentByPosition[position++] = component;
+            }
+        }
+
+        Set<Long> selectedEdges = new HashSet<>();
+        List<Long> cycleEdges = new ArrayList<>();
+        position = 0;
+        for (int componentSize : componentSizes) {
+            for (int index = 0; index < componentSize; index++) {
+                int source = order.get(position + index);
+                int destination = order.get(position + (index + 1) % componentSize);
+                long edge = directedEdgeKey(source, destination);
+                cycleEdges.add(edge);
+                selectedEdges.add(edge);
+            }
+            position += componentSize;
+        }
+
+        List<Long> candidateEdges = new ArrayList<>();
+        for (int sourcePosition = 0; sourcePosition < vertexCount; sourcePosition++) {
+            for (int destinationPosition = 0;
+                 destinationPosition < vertexCount;
+                 destinationPosition++) {
+                if (sourcePosition == destinationPosition) {
+                    continue;
+                }
+                boolean sameComponent = componentByPosition[sourcePosition]
+                        == componentByPosition[destinationPosition];
+                boolean forwardComponentEdge = componentByPosition[sourcePosition]
+                        < componentByPosition[destinationPosition];
+                long edge = directedEdgeKey(
+                        order.get(sourcePosition), order.get(destinationPosition));
+                if ((sameComponent && !selectedEdges.contains(edge)) || forwardComponentEdge) {
+                    candidateEdges.add(edge);
+                }
+            }
+        }
+        if (edgeCount > cycleEdges.size() + candidateEdges.size()) {
+            throw new IllegalArgumentException(
+                    "Edge count exceeds the capacity while preserving separate SCCs");
+        }
+
+        Collections.shuffle(candidateEdges, random);
+        DirectedGraph graph = new DirectedGraph(vertexCount);
+        for (long edge : cycleEdges) {
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        for (int index = 0; index < edgeCount - cycleEdges.size(); index++) {
+            long edge = candidateEdges.get(index);
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        return graph;
+    }
+
+    public DirectedGraph generateDirectedGraphWithIsolatedVertices(
+            int vertexCount, int edgeCount) {
+        if (vertexCount < 5) {
+            throw new IllegalArgumentException(
+                    "An isolated-vertices graph needs at least five vertices");
+        }
+        int isolatedCount = Math.max(2, vertexCount / 5);
+        int activeCount = vertexCount - isolatedCount;
+        if (edgeCount < activeCount || edgeCount > (long) activeCount * (activeCount - 1)) {
+            throw new IllegalArgumentException(
+                    "Edge count cannot preserve a strongly connected core and isolated vertices");
+        }
+
+        List<Integer> order = vertexOrder(vertexCount);
+        List<Integer> activeVertices = new ArrayList<>(order.subList(0, activeCount));
+        Set<Long> selectedEdges = new HashSet<>();
+        List<Long> cycleEdges = new ArrayList<>();
+        for (int index = 0; index < activeCount; index++) {
+            long edge = directedEdgeKey(
+                    activeVertices.get(index), activeVertices.get((index + 1) % activeCount));
+            cycleEdges.add(edge);
+            selectedEdges.add(edge);
+        }
+
+        List<Long> candidateEdges = new ArrayList<>();
+        for (int source : activeVertices) {
+            for (int destination : activeVertices) {
+                long edge = directedEdgeKey(source, destination);
+                if (source != destination && !selectedEdges.contains(edge)) {
+                    candidateEdges.add(edge);
+                }
+            }
+        }
+        Collections.shuffle(candidateEdges, random);
+
+        DirectedGraph graph = new DirectedGraph(vertexCount);
+        for (long edge : cycleEdges) {
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        for (int index = 0; index < edgeCount - cycleEdges.size(); index++) {
+            long edge = candidateEdges.get(index);
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        return graph;
+    }
+
     public DirectedGraph generatePartialCycleDirectedGraph(int vertexCount, int edgeCount) {
         if (vertexCount < 3 || edgeCount < 0) {
             throw new IllegalArgumentException(

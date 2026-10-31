@@ -4,6 +4,7 @@ import com.daa.graph.DirectedGraph;
 import com.daa.graph.WeightedGraph;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +56,7 @@ class ExperimentRunnerTest {
                 .operationCounts().get("edgesExamined"));
         assertEquals("directed",
                 ExperimentRunner.benchmarkStronglyConnectedComponents(directedGraph).scenario());
-        assertEquals(4L, ExperimentRunner.benchmarkStronglyConnectedComponents(directedGraph)
+        assertEquals(6L, ExperimentRunner.benchmarkStronglyConnectedComponents(directedGraph)
                 .operationCounts().get("edgesExamined"));
         assertEquals(3L, ExperimentRunner.benchmarkDijkstra(weightedGraph, 0)
                 .operationCounts().get("priorityQueueRemovals"));
@@ -78,5 +79,27 @@ class ExperimentRunnerTest {
         assertEquals("unreachable",
                 ExperimentRunner.benchmarkDijkstra(
                         graphWithUnreachableVertex, 0, "unreachable").scenario());
+    }
+
+    @Test
+    void runsBothAdditionalSccScenariosAtEveryStandardSize() {
+        List<ExperimentResult> results = ExperimentRunner.runAdditionalSccExperiments(42);
+
+        assertEquals(6, results.size());
+        for (int index = 0; index < results.size(); index++) {
+            ExperimentResult result = results.get(index);
+            GraphGenerator.GraphSize size =
+                    GraphGenerator.standardMstSizes().get(index / 2);
+            assertEquals("Kosaraju SCC", result.algorithm());
+            assertEquals(index % 2 == 0 ? "multiple_components" : "isolated_vertices",
+                    result.scenario());
+            assertEquals(size.vertexCount(), result.vertexCount());
+            assertEquals(size.edgeCount(), result.edgeCount());
+            assertEquals(ExperimentRunner.REPETITIONS, result.repetitionCount());
+            assertEquals(3L * size.edgeCount(),
+                    result.operationCounts().get("edgesExamined"));
+            assertEquals(2L * size.vertexCount(),
+                    result.operationCounts().get("verticesVisited"));
+        }
     }
 }

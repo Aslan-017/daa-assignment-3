@@ -77,4 +77,34 @@ class CsvExporterTest {
                         + "average_elapsed_time_ns",
                 Files.readAllLines(output).get(0));
     }
+
+    @Test
+    void writesDsuVariantResultsAndOperationMetrics() throws IOException {
+        DsuExperimentResult result = new DsuExperimentResult(
+                "basic",
+                42,
+                5,
+                6,
+                5,
+                120,
+                Map.of(
+                        "connectivityQueries", 2L,
+                        "dsuFindCalls", 12L,
+                        "findTraversals", 5L,
+                        "unionParentPointerUpdates", 4L,
+                        "pathCompressionParentPointerUpdates", 0L,
+                        "successfulUnions", 4L));
+        Path output = temporaryDirectory.resolve("dsu-variants.csv");
+
+        CsvExporter.exportDsuResults(List.of(result), output);
+
+        List<String> lines = Files.readAllLines(output);
+        assertEquals(
+                "variant,seed,vertex_count,operation_count,repetition_count,"
+                        + "average_elapsed_time_ns,connectivityQueries,dsuFindCalls,"
+                        + "findTraversals,pathCompressionParentPointerUpdates,"
+                        + "successfulUnions,unionParentPointerUpdates",
+                lines.get(0));
+        assertEquals("basic,42,5,6,5,120,2,12,5,0,4,4", lines.get(1));
+    }
 }

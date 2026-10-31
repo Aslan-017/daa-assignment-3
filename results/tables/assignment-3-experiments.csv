@@ -8,18 +8,24 @@ Prim,connected,1000,5000,5,5941940,,5000,5000,5000,,4001,,,
 Topological sort,dag,10,30,5,822660,,60,,,,,,10,
 Topological sort,cyclic,10,30,5,30660,,30,,,,,,0,
 Topological sort,partial_cycle,10,30,5,59240,,58,,,,,,8,
-Kosaraju SCC,directed,10,30,5,328860,,60,,,,,,,20
+Kosaraju SCC,directed,10,30,5,328860,,90,,,,,,,20
 Dijkstra,connected,10,30,5,1148660,,60,14,14,,4,,,
 Dijkstra,unreachable,10,30,5,54060,,60,14,14,,5,,,
 Topological sort,dag,100,500,5,421760,,1000,,,,,,100,
 Topological sort,cyclic,100,500,5,117300,,500,,,,,,0,
 Topological sort,partial_cycle,100,500,5,226920,,929,,,,,,75,
-Kosaraju SCC,directed,100,500,5,751760,,1000,,,,,,,200
+Kosaraju SCC,directed,100,500,5,751760,,1500,,,,,,,200
 Dijkstra,connected,100,500,5,786760,,1000,206,206,,106,,,
 Dijkstra,unreachable,100,500,5,666200,,1000,198,198,,99,,,
 Topological sort,dag,1000,5000,5,2635260,,10000,,,,,,1000,
 Topological sort,cyclic,1000,5000,5,716720,,5000,,,,,,0,
 Topological sort,partial_cycle,1000,5000,5,530020,,9275,,,,,,750,
-Kosaraju SCC,directed,1000,5000,5,5628780,,10000,,,,,,,2000
+Kosaraju SCC,directed,1000,5000,5,5628780,,15000,,,,,,,2000
 Dijkstra,connected,1000,5000,5,4993460,,10000,1997,1997,,997,,,
 Dijkstra,unreachable,1000,5000,5,1371720,,10000,1983,1983,,984,,,
+Kosaraju SCC,multiple_components,10,30,5,502980,,90,,,,,,,20
+Kosaraju SCC,isolated_vertices,10,30,5,163340,,90,,,,,,,20
+Kosaraju SCC,multiple_components,100,500,5,749660,,1500,,,,,,,200
+Kosaraju SCC,isolated_vertices,100,500,5,659600,,1500,,,,,,,200
+Kosaraju SCC,multiple_components,1000,5000,5,5813620,,15000,,,,,,,2000
+Kosaraju SCC,isolated_vertices,1000,5000,5,1717260,,15000,,,,,,,2000

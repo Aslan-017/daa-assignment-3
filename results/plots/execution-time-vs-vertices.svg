@@ -30,43 +30,55 @@
 <circle class="point" cx="100.00" cy="495.64" r="5" fill="#dc2626"/>
 <circle class="point" cx="465.00" cy="295.67" r="5" fill="#dc2626"/>
 <circle class="point" cx="830.00" cy="238.17" r="5" fill="#dc2626"/>
-<line x1="875" y1="152" x2="907" y2="152" stroke="#dc2626" stroke-width="3"/>
-<text x="917" y="157" font-size="14">Dijkstra - unreachable</text>
+<line x1="875" y1="146" x2="907" y2="146" stroke="#dc2626" stroke-width="3"/>
+<text x="917" y="151" font-size="14">Dijkstra - unreachable</text>
 <polyline class="series" stroke="#15803d" points="100.00,351.88 465.00,286.05 830.00,125.76"/>
 <circle class="point" cx="100.00" cy="351.88" r="5" fill="#15803d"/>
 <circle class="point" cx="465.00" cy="286.05" r="5" fill="#15803d"/>
 <circle class="point" cx="830.00" cy="125.76" r="5" fill="#15803d"/>
-<line x1="875" y1="194" x2="907" y2="194" stroke="#15803d" stroke-width="3"/>
-<text x="917" y="199" font-size="14">Kosaraju SCC - directed</text>
+<line x1="875" y1="182" x2="907" y2="182" stroke="#15803d" stroke-width="3"/>
+<text x="917" y="187" font-size="14">Kosaraju SCC - directed</text>
+<polyline class="series" stroke="#7c3aed" points="100.00,318.05 465.00,286.27 830.00,123.18"/>
+<circle class="point" cx="100.00" cy="318.05" r="5" fill="#7c3aed"/>
+<circle class="point" cx="465.00" cy="286.27" r="5" fill="#7c3aed"/>
+<circle class="point" cx="830.00" cy="123.18" r="5" fill="#7c3aed"/>
+<line x1="875" y1="218" x2="907" y2="218" stroke="#7c3aed" stroke-width="3"/>
+<text x="917" y="223" font-size="14">Kosaraju SCC - multiple_components</text>
+<polyline class="series" stroke="#a16207" points="100.00,407.60 465.00,296.47 830.00,220.28"/>
+<circle class="point" cx="100.00" cy="407.60" r="5" fill="#a16207"/>
+<circle class="point" cx="465.00" cy="296.47" r="5" fill="#a16207"/>
+<circle class="point" cx="830.00" cy="220.28" r="5" fill="#a16207"/>
+<line x1="875" y1="254" x2="907" y2="254" stroke="#a16207" stroke-width="3"/>
+<text x="917" y="259" font-size="14">Kosaraju SCC - isolated_vertices</text>
 <polyline class="series" stroke="#9333ea" points="100.00,192.37 465.00,268.62 830.00,143.15"/>
 <circle class="point" cx="100.00" cy="192.37" r="5" fill="#9333ea"/>
 <circle class="point" cx="465.00" cy="268.62" r="5" fill="#9333ea"/>
 <circle class="point" cx="830.00" cy="143.15" r="5" fill="#9333ea"/>
-<line x1="875" y1="236" x2="907" y2="236" stroke="#9333ea" stroke-width="3"/>
-<text x="917" y="241" font-size="14">Kruskal - connected</text>
+<line x1="875" y1="290" x2="907" y2="290" stroke="#9333ea" stroke-width="3"/>
+<text x="917" y="295" font-size="14">Kruskal - connected</text>
 <polyline class="series" stroke="#ea580c" points="100.00,249.21 465.00,252.88 830.00,121.45"/>
 <circle class="point" cx="100.00" cy="249.21" r="5" fill="#ea580c"/>
 <circle class="point" cx="465.00" cy="252.88" r="5" fill="#ea580c"/>
 <circle class="point" cx="830.00" cy="121.45" r="5" fill="#ea580c"/>
-<line x1="875" y1="278" x2="907" y2="278" stroke="#ea580c" stroke-width="3"/>
-<text x="917" y="283" font-size="14">Prim - connected</text>
+<line x1="875" y1="326" x2="907" y2="326" stroke="#ea580c" stroke-width="3"/>
+<text x="917" y="331" font-size="14">Prim - connected</text>
 <polyline class="series" stroke="#0891b2" points="100.00,540.80 465.00,433.96 830.00,289.85"/>
 <circle class="point" cx="100.00" cy="540.80" r="5" fill="#0891b2"/>
 <circle class="point" cx="465.00" cy="433.96" r="5" fill="#0891b2"/>
 <circle class="point" cx="830.00" cy="289.85" r="5" fill="#0891b2"/>
-<line x1="875" y1="320" x2="907" y2="320" stroke="#0891b2" stroke-width="3"/>
-<text x="917" y="325" font-size="14">Topological sort - cyclic</text>
+<line x1="875" y1="362" x2="907" y2="362" stroke="#0891b2" stroke-width="3"/>
+<text x="917" y="367" font-size="14">Topological sort - cyclic</text>
 <polyline class="series" stroke="#be185d" points="100.00,278.88 465.00,332.07 830.00,186.18"/>
 <circle class="point" cx="100.00" cy="278.88" r="5" fill="#be185d"/>
 <circle class="point" cx="465.00" cy="332.07" r="5" fill="#be185d"/>
 <circle class="point" cx="830.00" cy="186.18" r="5" fill="#be185d"/>
-<line x1="875" y1="362" x2="907" y2="362" stroke="#be185d" stroke-width="3"/>
-<text x="917" y="367" font-size="14">Topological sort - dag</text>
+<line x1="875" y1="398" x2="907" y2="398" stroke="#be185d" stroke-width="3"/>
+<text x="917" y="403" font-size="14">Topological sort - dag</text>
 <polyline class="series" stroke="#4b5563" points="100.00,488.35 465.00,381.42 830.00,313.88"/>
 <circle class="point" cx="100.00" cy="488.35" r="5" fill="#4b5563"/>
 <circle class="point" cx="465.00" cy="381.42" r="5" fill="#4b5563"/>
 <circle class="point" cx="830.00" cy="313.88" r="5" fill="#4b5563"/>
-<line x1="875" y1="404" x2="907" y2="404" stroke="#4b5563" stroke-width="3"/>
-<text x="917" y="409" font-size="14">Topological sort - partial_cycle</text>
+<line x1="875" y1="434" x2="907" y2="434" stroke="#4b5563" stroke-width="3"/>
+<text x="917" y="439" font-size="14">Topological sort - partial_cycle</text>
 <text x="100" y="742" font-size="12" fill="#4b5563">Source: results/tables/assignment-3-experiments.csv; plotted values are recorded five-run averages.</text>
 </svg>
