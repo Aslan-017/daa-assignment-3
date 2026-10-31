@@ -15,10 +15,11 @@ class ExperimentResultTest {
         operationCounts.put("edge-relaxations", 12L);
 
         ExperimentResult result = new ExperimentResult(
-                "Dijkstra", 10, 20, 5, 100L, operationCounts);
+                "Dijkstra", "connected", 10, 20, 5, 100L, operationCounts);
         operationCounts.put("edge-relaxations", 99L);
 
         assertEquals("Dijkstra", result.algorithm());
+        assertEquals("connected", result.scenario());
         assertEquals(10, result.vertexCount());
         assertEquals(20, result.edgeCount());
         assertEquals(5, result.repetitionCount());
@@ -32,8 +33,8 @@ class ExperimentResultTest {
     @Test
     void rejectsInvalidMeasurementCounts() {
         assertThrows(IllegalArgumentException.class,
-                () -> new ExperimentResult("Prim", -1, 0, 5, 100, Map.of()));
+                () -> new ExperimentResult("Prim", "connected", -1, 0, 5, 100, Map.of()));
         assertThrows(IllegalArgumentException.class,
-                () -> new ExperimentResult("Prim", 1, 0, 0, 100, Map.of()));
+                () -> new ExperimentResult("Prim", "connected", 1, 0, 0, 100, Map.of()));
     }
 }

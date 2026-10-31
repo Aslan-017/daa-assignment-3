@@ -2,18 +2,11 @@ package com.daa.dsu;
 
 import com.daa.metrics.OperationCounts;
 
-/**
- * Disjoint-set data structure using path compression and union by size.
- */
 public final class DisjointSetUnion {
     private final int[] parent;
     private final int[] size;
     private int setCount;
 
-    /**
-     * Creates {@code elementCount} singleton sets, indexed from 0 to
-     * {@code elementCount - 1}.
-     */
     public DisjointSetUnion(int elementCount) {
         if (elementCount < 0) {
             throw new IllegalArgumentException("Element count cannot be negative: " + elementCount);
@@ -28,11 +21,6 @@ public final class DisjointSetUnion {
         }
     }
 
-    /**
-     * Returns the representative of the set containing {@code element}.
-     * Nodes on the path to the representative are compressed to point directly
-     * to it.
-     */
     public int find(int element) {
         validateElement(element);
 
@@ -49,21 +37,13 @@ public final class DisjointSetUnion {
         return root;
     }
 
-    /**
-     * Instrumented variant of {@link #find(int)}. Each invocation increments
-     * {@code dsuFindCalls} exactly once.
-     */
+    // Each invocation counts once, including the two find calls made by union.
     public int find(int element, OperationCounts counters) {
         validateElement(element);
         counters.increment(OperationCounts.Counter.dsuFindCalls);
         return find(element);
     }
 
-    /**
-     * Merges the sets containing the two elements.
-     *
-     * @return {@code true} if two previously separate sets were merged
-     */
     public boolean union(int first, int second) {
         int firstRoot = find(first);
         int secondRoot = find(second);
@@ -82,11 +62,6 @@ public final class DisjointSetUnion {
         return true;
     }
 
-    /**
-     * Instrumented variant of {@link #union(int, int)}. The associated
-     * {@code dsuFindCalls} counter is incremented for the two actual
-     * representative lookups performed by this operation.
-     */
     public boolean union(int first, int second, OperationCounts counters) {
         int firstRoot = find(first, counters);
         int secondRoot = find(second, counters);
@@ -99,7 +74,7 @@ public final class DisjointSetUnion {
     }
 
     private void mergeRoots(int firstRoot, int secondRoot) {
-        // Attaching the smaller tree keeps the height bounded before compression.
+        // Attach the smaller tree to keep the tree shallow.
         if (size[firstRoot] < size[secondRoot]) {
             int temporary = firstRoot;
             firstRoot = secondRoot;

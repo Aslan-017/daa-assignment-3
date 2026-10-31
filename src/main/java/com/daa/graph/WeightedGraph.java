@@ -3,14 +3,7 @@ package com.daa.graph;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An undirected weighted graph with a fixed number of vertices.
- *
- * <p>Parallel edges are allowed: every call to {@link #addEdge(int, int, int)}
- * inserts a new edge, even if an edge with the same endpoints and weight
- * already exists. Self-loops are allowed and appear once in their vertex's
- * adjacency list.</p>
- */
+// Parallel edges are allowed; self-loops appear once in adjacency lists.
 public final class WeightedGraph {
     private final int vertexCount;
     private final List<Edge> edges;
@@ -37,11 +30,6 @@ public final class WeightedGraph {
         return edges.size();
     }
 
-    /**
-     * Inserts an undirected edge with a non-negative weight.
-     *
-     * @return the edge in the same endpoint order supplied by the caller
-     */
     public Edge addEdge(int source, int destination, int weight) {
         validateVertex(source);
         validateVertex(destination);
@@ -53,23 +41,15 @@ public final class WeightedGraph {
         edges.add(edge);
         adjacencyList.get(source).add(edge);
         if (source != destination) {
-            // Adjacency entries are oriented from the vertex whose list contains them.
             adjacencyList.get(destination).add(new Edge(destination, source, weight));
         }
         return edge;
     }
 
-    /**
-     * Returns each inserted edge once, in insertion order.
-     */
     public List<Edge> getEdges() {
         return List.copyOf(edges);
     }
 
-    /**
-     * Returns an immutable adjacency-list snapshot. Each adjacency entry is
-     * oriented from its list's vertex to the neighboring vertex.
-     */
     public List<List<Edge>> getAdjacencyList() {
         List<List<Edge>> snapshot = new ArrayList<>(vertexCount);
         for (List<Edge> adjacentEdges : adjacencyList) {
@@ -78,9 +58,6 @@ public final class WeightedGraph {
         return List.copyOf(snapshot);
     }
 
-    /**
-     * Returns the immutable list of edges adjacent to {@code vertex}.
-     */
     public List<Edge> getAdjacentEdges(int vertex) {
         validateVertex(vertex);
         return List.copyOf(adjacencyList.get(vertex));

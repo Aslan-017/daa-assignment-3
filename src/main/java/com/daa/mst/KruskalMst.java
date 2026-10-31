@@ -10,20 +10,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Kruskal's minimum spanning tree algorithm.
- *
- * <p>Edges of equal weight are considered in their graph insertion order.
- * Different tie choices may produce different valid minimum spanning trees.</p>
- */
+// Equal-weight edges retain insertion order; another tie order may select a different valid MST.
 public final class KruskalMst {
     private KruskalMst() {
     }
 
-    /**
-     * Finds a minimum spanning tree, or a minimum spanning forest when the
-     * graph is disconnected.
-     */
     public static MstResult findMinimumSpanningTree(WeightedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
 
@@ -50,12 +41,8 @@ public final class KruskalMst {
         return new MstResult(selectedEdges, totalWeight, isSpanningTree);
     }
 
-    /**
-     * Instrumented variant. {@code edgesExamined} counts edges reached in
-     * sorted order, {@code dsuFindCalls} counts the actual representative
-     * lookups performed by DSU, and union counters count successful merges
-     * versus edges rejected because their endpoints were already connected.
-     */
+    // Counts sorted edges reached before stopping, actual DSU find calls, successful unions,
+    // and edges rejected because their endpoints are already connected.
     public static MstResult findMinimumSpanningTree(
             WeightedGraph graph, OperationCounts counters) {
         Objects.requireNonNull(graph, "Graph cannot be null");
@@ -68,7 +55,6 @@ public final class KruskalMst {
 
         int vertexCount = graph.getVertexCount();
         List<Edge> sortedEdges = new ArrayList<>(graph.getEdges());
-        // List.sort is stable, so equal-weight edges retain insertion order.
         sortedEdges.sort(Comparator.comparingInt(Edge::getWeight));
 
         DisjointSetUnion sets = new DisjointSetUnion(vertexCount);

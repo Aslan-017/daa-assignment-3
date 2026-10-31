@@ -4,6 +4,7 @@ import com.daa.connectivity.TopologicalSort;
 import com.daa.graph.DirectedGraph;
 import com.daa.graph.Edge;
 import com.daa.graph.WeightedGraph;
+import com.daa.metrics.OperationCounts;
 import com.daa.mst.KruskalMst;
 import com.daa.shortestpath.Dijkstra;
 import org.junit.jupiter.api.Test;
@@ -94,6 +95,36 @@ class GraphGeneratorTest {
     void rejectsCyclicDirectedGraphWithTooFewEdges() {
         assertThrows(IllegalArgumentException.class,
                 () -> new GraphGenerator(1).generateCyclicDirectedGraph(4, 3));
+    }
+
+    @Test
+    void generatedPartialCycleProcessesAcyclicRegionThenStallsAtCycle() {
+        GraphGenerator generator = new GraphGenerator(99);
+
+        for (GraphGenerator.GraphSize size : GraphGenerator.standardMstSizes()) {
+            DirectedGraph graph = generator.generatePartialCycleDirectedGraph(
+                    size.vertexCount(), size.edgeCount());
+            OperationCounts counters = new OperationCounts();
+
+            assertEquals(size.vertexCount(), graph.getVertexCount());
+            assertEquals(size.edgeCount(), graph.getEdgeCount());
+            assertFalse(TopologicalSort.sort(graph, counters).isAcyclic());
+            long processedVertices = counters.asMap().get("verticesProcessed");
+            assertTrue(processedVertices > 0);
+            assertTrue(processedVertices < graph.getVertexCount());
+            assertNoDuplicateDirectedEdges(graph);
+        }
+    }
+
+    @Test
+    void partialCycleGenerationIsReproducibleForFixedSeed() {
+        DirectedGraph first = new GraphGenerator(42).generatePartialCycleDirectedGraph(20, 70);
+        DirectedGraph second = new GraphGenerator(42).generatePartialCycleDirectedGraph(20, 70);
+
+        assertEquals(first.getVertexCount(), second.getVertexCount());
+        for (int vertex = 0; vertex < first.getVertexCount(); vertex++) {
+            assertEquals(first.getAdjacentVertices(vertex), second.getAdjacentVertices(vertex));
+        }
     }
 
     @Test

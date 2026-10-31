@@ -10,12 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
 
-/**
- * Prim's minimum spanning tree algorithm using a priority queue.
- *
- * <p>Equal-weight candidate edges are ordered by their endpoint indices.
- * Different tie choices may produce different valid minimum spanning trees.</p>
- */
+// Equal-weight candidates use endpoint order; different tie choices can produce another valid MST.
 public final class PrimMst {
     private static final Comparator<Edge> EDGE_ORDER = Comparator
             .comparingInt(Edge::getWeight)
@@ -25,10 +20,6 @@ public final class PrimMst {
     private PrimMst() {
     }
 
-    /**
-     * Finds a minimum spanning tree, or a minimum spanning forest when the
-     * graph is disconnected. Each component is processed once.
-     */
     public static MstResult findMinimumSpanningTree(WeightedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
 
@@ -68,12 +59,7 @@ public final class PrimMst {
         return new MstResult(selectedEdges, totalWeight, isSpanningTree);
     }
 
-    /**
-     * Instrumented variant. Insertions count every candidate edge placed in
-     * the queue, removals count every polled candidate, stale skips count
-     * removals whose destination was already visited, and examined edges
-     * count removed candidates including stale ones.
-     */
+    // Counts every queue insertion/removal, stale polled candidates, and removed candidates examined.
     public static MstResult findMinimumSpanningTree(
             WeightedGraph graph, OperationCounts counters) {
         Objects.requireNonNull(graph, "Graph cannot be null");

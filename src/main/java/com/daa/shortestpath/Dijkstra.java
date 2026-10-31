@@ -10,23 +10,13 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 
 /**
- * Dijkstra's single-source shortest-path algorithm for non-negative weighted
- * graphs.
+ * With duplicate entries in a binary-heap priority queue, runtime is
+ * O((V + E) log(E + 1)) and additional space is O(V + E).
  */
 public final class Dijkstra {
     private Dijkstra() {
     }
 
-    /**
-     * Finds shortest paths from {@code source} to every vertex.
-     *
-     * <p>With a binary-heap priority queue and duplicate entries for improved
-     * distances, this implementation runs in O((V + E) log(E + 1)) time and
-     * uses O(V + E) additional space in the worst case.</p>
-     *
-     * @throws IndexOutOfBoundsException if {@code source} is not a graph vertex
-     * @throws IllegalArgumentException if any graph edge has a negative weight
-     */
     public static DijkstraResult findShortestPaths(WeightedGraph graph, int source) {
         Objects.requireNonNull(graph, "Graph cannot be null");
 
@@ -75,12 +65,8 @@ public final class Dijkstra {
         return new DijkstraResult(source, distances, predecessors);
     }
 
-    /**
-     * Instrumented variant. Queue insertion/removal counters count actual
-     * operations, stale skips count removals whose recorded distance no longer
-     * matches the best known distance, and examined edges count adjacency
-     * entries scanned from non-stale removals.
-     */
+    // Counts every queue insertion/removal, removals with outdated distances, and adjacency
+    // entries scanned from current removals.
     public static DijkstraResult findShortestPaths(
             WeightedGraph graph, int source, OperationCounts counters) {
         Objects.requireNonNull(graph, "Graph cannot be null");
@@ -124,8 +110,8 @@ public final class Dijkstra {
                             "Dijkstra cannot process negative edge weights: " + weight);
                 }
 
-                // Keep Long.MAX_VALUE reserved for unreachable vertices and avoid overflow.
                 if (current.distance > Long.MAX_VALUE - weight) {
+                    // Keep Long.MAX_VALUE reserved for unreachable vertices and avoid overflow.
                     continue;
                 }
                 long candidateDistance = current.distance + weight;

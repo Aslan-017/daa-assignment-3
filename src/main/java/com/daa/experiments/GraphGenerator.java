@@ -11,15 +11,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Seeded generators for the assignment's graph experiments.
- *
- * <p>Undirected graphs are simple: no self-loops or parallel edges. Edge
- * weights are in [0, {@code weightBound}). DAG edges are sampled from a random
- * vertex ordering and only point forward in that ordering. Cyclic directed
- * graphs begin with a directed cycle and then receive sampled additional
- * non-loop edges. Directed graphs do not contain parallel edges.</p>
- */
 public final class GraphGenerator {
     private static final List<GraphSize> MST_SIZES = List.of(
             new GraphSize(10, 30),
@@ -32,21 +23,10 @@ public final class GraphGenerator {
         random = new Random(seed);
     }
 
-    /**
-     * Returns the required connected MST experiment sizes.
-     */
     public static List<GraphSize> standardMstSizes() {
         return MST_SIZES;
     }
 
-    /**
-     * Generates a connected simple undirected graph with exactly the requested
-     * number of edges. A random spanning tree is selected first; the remaining
-     * edges are sampled without replacement from the other vertex pairs.
-     * Candidate-pair enumeration uses O(V^2) temporary space.
-     *
-     * @param weightBound exclusive upper bound for generated weights
-     */
     public WeightedGraph generateConnectedWeightedGraph(
             int vertexCount, int edgeCount, int weightBound) {
         validateWeightBound(weightBound);
@@ -87,9 +67,6 @@ public final class GraphGenerator {
         return graph;
     }
 
-    /**
-     * Generates a simple undirected weighted graph, which may be disconnected.
-     */
     public WeightedGraph generateWeightedGraph(
             int vertexCount, int edgeCount, int weightBound) {
         validateWeightBound(weightBound);
@@ -111,11 +88,6 @@ public final class GraphGenerator {
         return graph;
     }
 
-    /**
-     * Generates a graph in which the last vertex is isolated, making it
-     * unreachable from source vertex 0. Edges are chosen only among the other
-     * vertices.
-     */
     public WeightedGraph generateWeightedGraphWithUnreachableVertex(
             int vertexCount, int edgeCount, int weightBound) {
         if (vertexCount < 2) {
@@ -127,11 +99,7 @@ public final class GraphGenerator {
                 vertexCount, generateWeightedGraph(vertexCount - 1, edgeCount, weightBound));
     }
 
-    /**
-     * Generates a simple directed acyclic graph. A random permutation defines
-     * a valid topological order; exactly {@code edgeCount} distinct forward
-     * edges are sampled from that order.
-     */
+    // Edges only point forward in a shuffled vertex order, so this graph is acyclic.
     public DirectedGraph generateDag(int vertexCount, int edgeCount) {
         validateDagSize(vertexCount, edgeCount);
 
@@ -155,10 +123,7 @@ public final class GraphGenerator {
         return graph;
     }
 
-    /**
-     * Generates a simple directed graph containing a cycle. For one vertex
-     * the cycle is a self-loop; otherwise it is a cycle through all vertices.
-     */
+    // Start with a cycle, then add distinct non-loop edges.
     public DirectedGraph generateCyclicDirectedGraph(int vertexCount, int edgeCount) {
         if (vertexCount < 0 || edgeCount < 0) {
             throw new IllegalArgumentException("Vertex and edge counts cannot be negative");
@@ -210,6 +175,81 @@ public final class GraphGenerator {
         return graph;
     }
 
+    public DirectedGraph generatePartialCycleDirectedGraph(int vertexCount, int edgeCount) {
+        if (vertexCount < 3 || edgeCount < 0) {
+            throw new IllegalArgumentException(
+                    "A partial-cycle graph needs at least three vertices");
+        }
+
+        List<Integer> order = vertexOrder(vertexCount);
+        int cycleSize = Math.max(2, vertexCount / 4);
+        cycleSize = Math.min(cycleSize, vertexCount - 1);
+        int acyclicSize = vertexCount - cycleSize;
+        int minimumEdges = cycleSize + acyclicSize - 1;
+        List<Long> cycleEdges = new ArrayList<>();
+        Set<Long> selectedEdges = new HashSet<>();
+
+        for (int index = 0; index < cycleSize; index++) {
+            int source = order.get(index);
+            int destination = order.get((index + 1) % cycleSize);
+            long edge = directedEdgeKey(source, destination);
+            cycleEdges.add(edge);
+            selectedEdges.add(edge);
+        }
+
+        List<Long> candidateEdges = new ArrayList<>();
+        for (int index = cycleSize; index < vertexCount - 1; index++) {
+            long edge = directedEdgeKey(order.get(index), order.get(index + 1));
+            selectedEdges.add(edge);
+        }
+        for (int sourcePosition = 0; sourcePosition < cycleSize; sourcePosition++) {
+            for (int destinationPosition = 0; destinationPosition < cycleSize; destinationPosition++) {
+                if (sourcePosition != destinationPosition) {
+                    long edge = directedEdgeKey(
+                            order.get(sourcePosition), order.get(destinationPosition));
+                    if (!selectedEdges.contains(edge)) {
+                        candidateEdges.add(edge);
+                    }
+                }
+            }
+        }
+        for (int sourcePosition = cycleSize; sourcePosition < vertexCount; sourcePosition++) {
+            for (int destinationPosition = sourcePosition + 1;
+                 destinationPosition < vertexCount;
+                 destinationPosition++) {
+                long edge = directedEdgeKey(
+                        order.get(sourcePosition), order.get(destinationPosition));
+                if (!selectedEdges.contains(edge)) {
+                    candidateEdges.add(edge);
+                }
+            }
+            for (int destinationPosition = 0; destinationPosition < cycleSize; destinationPosition++) {
+                candidateEdges.add(directedEdgeKey(
+                        order.get(sourcePosition), order.get(destinationPosition)));
+            }
+        }
+
+        if (edgeCount < minimumEdges || edgeCount > minimumEdges + candidateEdges.size()) {
+            throw new IllegalArgumentException(
+                    "Edge count cannot preserve both a cycle and a processable acyclic region");
+        }
+
+        Collections.shuffle(candidateEdges, random);
+        DirectedGraph graph = new DirectedGraph(vertexCount);
+        for (long edge : cycleEdges) {
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        for (int index = cycleSize; index < vertexCount - 1; index++) {
+            graph.addEdge(order.get(index), order.get(index + 1));
+        }
+        int extraEdgeCount = edgeCount - minimumEdges;
+        for (int index = 0; index < extraEdgeCount; index++) {
+            long edge = candidateEdges.get(index);
+            graph.addEdge((int) (edge >>> 32), (int) edge);
+        }
+        return graph;
+    }
+
     private WeightedGraph copyWithIsolatedLastVertex(
             int vertexCount, WeightedGraph partialGraph) {
         WeightedGraph graph = new WeightedGraph(vertexCount);
@@ -252,17 +292,6 @@ public final class GraphGenerator {
         if (edgeCount > maximumEdges) {
             throw new IllegalArgumentException(
                     "A DAG supports at most " + maximumEdges + " simple edges");
-        }
-    }
-
-    private static void validateDirectedSize(int vertexCount, int edgeCount) {
-        if (vertexCount < 0 || edgeCount < 0) {
-            throw new IllegalArgumentException("Vertex and edge counts cannot be negative");
-        }
-        long maximumEdges = (long) vertexCount * (vertexCount - 1);
-        if (edgeCount > maximumEdges) {
-            throw new IllegalArgumentException(
-                    "Simple directed graph supports at most " + maximumEdges + " non-loop edges");
         }
     }
 

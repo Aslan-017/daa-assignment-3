@@ -15,68 +15,76 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Runs reproducible algorithm timings over pre-generated graphs.
- *
- * <p>Each benchmark runs exactly five repetitions. Graph creation happens
- * before timing; only the algorithm invocation is inside the
- * {@link System#nanoTime()} interval. Operation counts are collected in one
- * separate instrumented invocation after timing, so counter overhead is not
- * included in elapsed times.</p>
- */
 public final class ExperimentRunner {
     public static final int REPETITIONS = 5;
     private static final int WEIGHT_BOUND = 1_000;
-    private static volatile Object lastBenchmarkResult;
 
     private ExperimentRunner() {
     }
 
     public static ExperimentResult benchmarkKruskal(WeightedGraph graph) {
+        return benchmarkKruskal(graph, "connected");
+    }
+
+    public static ExperimentResult benchmarkKruskal(WeightedGraph graph, String scenario) {
         Objects.requireNonNull(graph, "Graph cannot be null");
-        return benchmark("Kruskal", graph.getVertexCount(), graph.getEdgeCount(),
+        return benchmark("Kruskal", scenario, graph.getVertexCount(), graph.getEdgeCount(),
                 () -> KruskalMst.findMinimumSpanningTree(graph),
                 counters -> KruskalMst.findMinimumSpanningTree(graph, counters));
     }
 
     public static ExperimentResult benchmarkPrim(WeightedGraph graph) {
+        return benchmarkPrim(graph, "connected");
+    }
+
+    public static ExperimentResult benchmarkPrim(WeightedGraph graph, String scenario) {
         Objects.requireNonNull(graph, "Graph cannot be null");
-        return benchmark("Prim", graph.getVertexCount(), graph.getEdgeCount(),
+        return benchmark("Prim", scenario, graph.getVertexCount(), graph.getEdgeCount(),
                 () -> PrimMst.findMinimumSpanningTree(graph),
                 counters -> PrimMst.findMinimumSpanningTree(graph, counters));
     }
 
     public static ExperimentResult benchmarkTopologicalSort(DirectedGraph graph) {
+        return benchmarkTopologicalSort(graph, "dag");
+    }
+
+    public static ExperimentResult benchmarkTopologicalSort(DirectedGraph graph, String scenario) {
         Objects.requireNonNull(graph, "Graph cannot be null");
-        return benchmark("Topological sort", graph.getVertexCount(), graph.getEdgeCount(),
+        return benchmark("Topological sort", scenario, graph.getVertexCount(), graph.getEdgeCount(),
                 () -> TopologicalSort.sort(graph),
                 counters -> TopologicalSort.sort(graph, counters));
     }
 
     public static ExperimentResult benchmarkStronglyConnectedComponents(DirectedGraph graph) {
+        return benchmarkStronglyConnectedComponents(graph, "directed");
+    }
+
+    public static ExperimentResult benchmarkStronglyConnectedComponents(
+            DirectedGraph graph, String scenario) {
         Objects.requireNonNull(graph, "Graph cannot be null");
-        return benchmark("Kosaraju SCC", graph.getVertexCount(), graph.getEdgeCount(),
+        return benchmark("Kosaraju SCC", scenario, graph.getVertexCount(), graph.getEdgeCount(),
                 () -> StronglyConnectedComponents.find(graph),
                 counters -> StronglyConnectedComponents.find(graph, counters));
     }
 
     public static ExperimentResult benchmarkDijkstra(WeightedGraph graph, int source) {
+        return benchmarkDijkstra(graph, source, "connected");
+    }
+
+    public static ExperimentResult benchmarkDijkstra(
+            WeightedGraph graph, int source, String scenario) {
         Objects.requireNonNull(graph, "Graph cannot be null");
-        return benchmark("Dijkstra", graph.getVertexCount(), graph.getEdgeCount(),
+        return benchmark("Dijkstra", scenario, graph.getVertexCount(), graph.getEdgeCount(),
                 () -> Dijkstra.findShortestPaths(graph, source),
                 counters -> Dijkstra.findShortestPaths(graph, source, counters));
     }
 
-    /**
-     * Generates the required MST sizes and representative DAG, cyclic, and
-     * Dijkstra inputs, then benchmarks each algorithm five times per graph.
-     * All graphs are generated before their corresponding timed invocations.
-     */
     public static List<ExperimentResult> runStandardExperiments(long seed) {
         GraphGenerator generator = new GraphGenerator(seed);
         List<WeightedGraph> mstGraphs = new ArrayList<>();
         List<DirectedGraph> dagGraphs = new ArrayList<>();
         List<DirectedGraph> cyclicGraphs = new ArrayList<>();
+        List<DirectedGraph> partialCycleGraphs = new ArrayList<>();
         List<WeightedGraph> dijkstraGraphs = new ArrayList<>();
         List<WeightedGraph> disconnectedDijkstraGraphs = new ArrayList<>();
 
@@ -85,6 +93,8 @@ public final class ExperimentRunner {
                     size.vertexCount(), size.edgeCount(), WEIGHT_BOUND));
             dagGraphs.add(generator.generateDag(size.vertexCount(), size.edgeCount()));
             cyclicGraphs.add(generator.generateCyclicDirectedGraph(
+                    size.vertexCount(), size.edgeCount()));
+            partialCycleGraphs.add(generator.generatePartialCycleDirectedGraph(
                     size.vertexCount(), size.edgeCount()));
             dijkstraGraphs.add(generator.generateConnectedWeightedGraph(
                     size.vertexCount(), size.edgeCount(), WEIGHT_BOUND));
@@ -95,21 +105,25 @@ public final class ExperimentRunner {
         List<ExperimentResult> results = new ArrayList<>();
         for (int index = 0; index < mstGraphs.size(); index++) {
             WeightedGraph graph = mstGraphs.get(index);
-            results.add(benchmarkKruskal(graph));
-            results.add(benchmarkPrim(graph));
+            results.add(benchmarkKruskal(graph, "connected"));
+            results.add(benchmarkPrim(graph, "connected"));
         }
         for (int index = 0; index < dagGraphs.size(); index++) {
-            results.add(benchmarkTopologicalSort(dagGraphs.get(index)));
-            results.add(benchmarkTopologicalSort(cyclicGraphs.get(index)));
-            results.add(benchmarkStronglyConnectedComponents(cyclicGraphs.get(index)));
-            results.add(benchmarkDijkstra(dijkstraGraphs.get(index), 0));
-            results.add(benchmarkDijkstra(disconnectedDijkstraGraphs.get(index), 0));
+            results.add(benchmarkTopologicalSort(dagGraphs.get(index), "dag"));
+            results.add(benchmarkTopologicalSort(cyclicGraphs.get(index), "cyclic"));
+            results.add(benchmarkTopologicalSort(
+                    partialCycleGraphs.get(index), "partial_cycle"));
+            results.add(benchmarkStronglyConnectedComponents(cyclicGraphs.get(index), "directed"));
+            results.add(benchmarkDijkstra(dijkstraGraphs.get(index), 0, "connected"));
+            results.add(benchmarkDijkstra(
+                    disconnectedDijkstraGraphs.get(index), 0, "unreachable"));
         }
         return List.copyOf(results);
     }
 
     private static ExperimentResult benchmark(
             String algorithm,
+            String scenario,
             int vertexCount,
             int edgeCount,
             Supplier<?> invocation,
@@ -117,9 +131,8 @@ public final class ExperimentRunner {
         long elapsedTotal = 0;
         for (int repetition = 0; repetition < REPETITIONS; repetition++) {
             long start = System.nanoTime();
-            Object result = invocation.get();
+            invocation.get();
             long elapsed = System.nanoTime() - start;
-            lastBenchmarkResult = result;
             elapsedTotal += elapsed;
         }
         OperationCounts counters = new OperationCounts();
@@ -127,6 +140,7 @@ public final class ExperimentRunner {
 
         return new ExperimentResult(
                 algorithm,
+                scenario,
                 vertexCount,
                 edgeCount,
                 REPETITIONS,

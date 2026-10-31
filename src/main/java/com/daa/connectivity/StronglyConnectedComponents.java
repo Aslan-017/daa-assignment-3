@@ -10,21 +10,10 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Finds strongly connected components with Kosaraju's two-pass algorithm.
- *
- * <p>Runs in O(V + E) time and uses O(V + E) additional space for the
- * transpose graph, traversal state, and result.</p>
- */
 public final class StronglyConnectedComponents {
     private StronglyConnectedComponents() {
     }
 
-    /**
-     * Returns an immutable list of immutable components. Every vertex appears
-     * in exactly one component; component and vertex order are traversal
-     * dependent and should not be relied upon.
-     */
     public static List<List<Integer>> find(DirectedGraph graph) {
         Objects.requireNonNull(graph, "Graph cannot be null");
 
@@ -96,13 +85,7 @@ public final class StronglyConnectedComponents {
         return List.copyOf(components);
     }
 
-    /**
-     * Instrumented variant. {@code verticesVisited} counts each vertex once
-     * when discovered in each DFS pass (so two for every graph vertex).
-     * {@code edgesExamined} counts each outgoing adjacency entry inspected in
-     * the first pass and each transpose adjacency entry inspected in the
-     * second pass.
-     */
+    // Visits count discoveries in each pass; edge scans count original and transpose adjacency entries.
     public static List<List<Integer>> find(
             DirectedGraph graph, OperationCounts counters) {
         Objects.requireNonNull(graph, "Graph cannot be null");
@@ -117,8 +100,6 @@ public final class StronglyConnectedComponents {
         int[] nextNeighborIndex = new int[vertexCount];
         List<Integer> finishingOrder = new ArrayList<>(vertexCount);
 
-        // Iterative DFS with a per-vertex neighbor cursor records postorder
-        // without risking a Java call-stack overflow on long paths.
         for (int start = 0; start < vertexCount; start++) {
             if (visited[start]) {
                 continue;

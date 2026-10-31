@@ -21,6 +21,7 @@ class ExperimentRunnerTest {
         ExperimentResult second = ExperimentRunner.benchmarkDijkstra(graph, 0);
 
         assertEquals("Dijkstra", first.algorithm());
+        assertEquals("connected", first.scenario());
         assertEquals(3, first.vertexCount());
         assertEquals(3, first.edgeCount());
         assertEquals(ExperimentRunner.REPETITIONS, first.repetitionCount());
@@ -45,13 +46,37 @@ class ExperimentRunnerTest {
 
         assertEquals(4L, ExperimentRunner.benchmarkKruskal(weightedGraph)
                 .operationCounts().get("dsuFindCalls"));
+        assertEquals("connected", ExperimentRunner.benchmarkKruskal(weightedGraph).scenario());
         assertTrue(ExperimentRunner.benchmarkPrim(weightedGraph)
                 .operationCounts().containsKey("priorityQueueInsertions"));
+        assertEquals("connected", ExperimentRunner.benchmarkPrim(weightedGraph).scenario());
+        assertEquals("dag", ExperimentRunner.benchmarkTopologicalSort(directedGraph).scenario());
         assertEquals(4L, ExperimentRunner.benchmarkTopologicalSort(directedGraph)
                 .operationCounts().get("edgesExamined"));
+        assertEquals("directed",
+                ExperimentRunner.benchmarkStronglyConnectedComponents(directedGraph).scenario());
         assertEquals(4L, ExperimentRunner.benchmarkStronglyConnectedComponents(directedGraph)
                 .operationCounts().get("edgesExamined"));
         assertEquals(3L, ExperimentRunner.benchmarkDijkstra(weightedGraph, 0)
                 .operationCounts().get("priorityQueueRemovals"));
+
+        DirectedGraph cyclicGraph = new DirectedGraph(2);
+        cyclicGraph.addEdge(0, 1);
+        cyclicGraph.addEdge(1, 0);
+        assertEquals("cyclic",
+                ExperimentRunner.benchmarkTopologicalSort(cyclicGraph, "cyclic").scenario());
+        DirectedGraph partialCycleGraph = new GraphGenerator(31)
+                .generatePartialCycleDirectedGraph(12, 30);
+        ExperimentResult partialCycleResult =
+                ExperimentRunner.benchmarkTopologicalSort(partialCycleGraph, "partial_cycle");
+        assertEquals("partial_cycle", partialCycleResult.scenario());
+        assertTrue(partialCycleResult.operationCounts().get("verticesProcessed") > 0);
+        assertTrue(partialCycleResult.operationCounts().get("verticesProcessed") < 12);
+
+        WeightedGraph graphWithUnreachableVertex = new WeightedGraph(3);
+        graphWithUnreachableVertex.addEdge(0, 1, 1);
+        assertEquals("unreachable",
+                ExperimentRunner.benchmarkDijkstra(
+                        graphWithUnreachableVertex, 0, "unreachable").scenario());
     }
 }

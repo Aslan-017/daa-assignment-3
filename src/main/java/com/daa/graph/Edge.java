@@ -2,11 +2,6 @@ package com.daa.graph;
 
 import java.util.Objects;
 
-/**
- * An immutable weighted edge. The endpoints are not restricted to a particular
- * graph representation, and the weight may be negative when the edge is used
- * outside {@link WeightedGraph}.
- */
 public final class Edge {
     private final int source;
     private final int destination;

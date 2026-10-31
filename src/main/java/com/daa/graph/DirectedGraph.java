@@ -3,13 +3,7 @@ package com.daa.graph;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A directed graph with a fixed number of vertices, indexed from 0.
- *
- * <p>Parallel edges and self-loops are allowed. Each call to
- * {@link #addEdge(int, int)} adds one directed edge from source to destination;
- * parallel edges are kept as separate adjacency entries.</p>
- */
+// Parallel edges and self-loops are stored as separate adjacency entries.
 public final class DirectedGraph {
     private final List<List<Integer>> adjacencyList;
     private int edgeCount;
@@ -33,9 +27,6 @@ public final class DirectedGraph {
         return edgeCount;
     }
 
-    /**
-     * Adds one directed edge from {@code source} to {@code destination}.
-     */
     public void addEdge(int source, int destination) {
         validateVertex(source);
         validateVertex(destination);
@@ -43,9 +34,6 @@ public final class DirectedGraph {
         edgeCount++;
     }
 
-    /**
-     * Returns an immutable adjacency-list snapshot.
-     */
     public List<List<Integer>> getAdjacencyList() {
         List<List<Integer>> snapshot = new ArrayList<>(adjacencyList.size());
         for (List<Integer> adjacentVertices : adjacencyList) {
@@ -54,10 +42,6 @@ public final class DirectedGraph {
         return List.copyOf(snapshot);
     }
 
-    /**
-     * Returns the immutable list of vertices reached by outgoing edges from
-     * {@code vertex}.
-     */
     public List<Integer> getAdjacentVertices(int vertex) {
         validateVertex(vertex);
         return List.copyOf(adjacencyList.get(vertex));

@@ -3,14 +3,6 @@ package com.daa.metrics;
 import java.util.EnumMap;
 import java.util.Map;
 
-/**
- * Mutable opt-in counters for algorithm instrumentation.
- *
- * <p>Each instrumented algorithm enables only its relevant counters. A counter
- * is present in {@link #asMap()} with value zero when it was enabled but no
- * matching event occurred. Instances are not thread-safe and should be created
- * fresh for each instrumentation run.</p>
- */
 public final class OperationCounts {
     public enum Counter {
         edgesExamined,
@@ -40,9 +32,6 @@ public final class OperationCounts {
         counts.put(counter, count + 1);
     }
 
-    /**
-     * Returns an immutable snapshot of enabled counters.
-     */
     public Map<String, Long> asMap() {
         Map<String, Long> snapshot = new java.util.LinkedHashMap<>();
         for (Counter counter : Counter.values()) {
